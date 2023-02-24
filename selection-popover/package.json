@@ -1,0 +1,36 @@
+{
+  "name": "selection-popover",
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepublishOnly": "cp ../README.md . && pnpm build",
+    "postpublish": "rm README.md",
+    "build": "tsup src",
+    "dev": "tsup src --watch"
+  },
+  "peerDependencies": {
+    "react": "^16.8 || ^17.0 || ^18.0",
+    "react-dom": "^16.8 || ^17.0 || ^18.0"
+  },
+  "dependencies": {
+    "@floating-ui/react": "0.19.2",
+    "@radix-ui/react-arrow": "1.0.1",
+    "@radix-ui/react-compose-refs": "1.0.0",
+    "@radix-ui/react-context": "1.0.0",
+    "@radix-ui/react-portal": "1.0.1",
+    "@radix-ui/react-presence": "1.0.0",
+    "@radix-ui/react-primitive": "1.0.1",
+    "@radix-ui/react-use-controllable-state": "1.0.0",
+    "@radix-ui/react-use-layout-effect": "1.0.0",
+    "@radix-ui/react-use-size": "1.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.0.28"
+  }
+}

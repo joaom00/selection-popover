@@ -1,0 +1,12 @@
+{
+  "extends": ["react-app"],
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/jsx-pascal-case": ["off"]
+  }
+}
+

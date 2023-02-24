@@ -1,0 +1,17 @@
+.DS_Store
+.idea
+.env
+.env.local
+.env.development
+.env.development.local
+*.log
+yalc.lock
+
+.vercel/
+.turbo/
+.next/
+.yalc/
+build/
+dist/
+node_modules/
+.vercel
