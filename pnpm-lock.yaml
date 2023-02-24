@@ -24,17 +24,17 @@ importers:
 
   selection-popover:
     specifiers:
-      '@floating-ui/react': ^0.19.2
-      '@radix-ui/react-arrow': ^1.0.1
-      '@radix-ui/react-compose-refs': ^1.0.0
-      '@radix-ui/react-context': ^1.0.0
-      '@radix-ui/react-portal': ^1.0.1
-      '@radix-ui/react-presence': ^1.0.0
-      '@radix-ui/react-primitive': ^1.0.1
-      '@radix-ui/react-use-controllable-state': ^1.0.0
-      '@radix-ui/react-use-layout-effect': ^1.0.0
-      '@radix-ui/react-use-size': ^1.0.0
-      '@types/react': ^18.0.28
+      '@floating-ui/react': 0.19.2
+      '@radix-ui/react-arrow': 1.0.1
+      '@radix-ui/react-compose-refs': 1.0.0
+      '@radix-ui/react-context': 1.0.0
+      '@radix-ui/react-portal': 1.0.1
+      '@radix-ui/react-presence': 1.0.0
+      '@radix-ui/react-primitive': 1.0.1
+      '@radix-ui/react-use-controllable-state': 1.0.0
+      '@radix-ui/react-use-layout-effect': 1.0.0
+      '@radix-ui/react-use-size': 1.0.0
+      '@types/react': 18.0.28
     dependencies:
       '@floating-ui/react': 0.19.2_@types+react@18.0.28
       '@radix-ui/react-arrow': 1.0.1
