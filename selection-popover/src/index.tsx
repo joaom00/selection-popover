@@ -41,6 +41,8 @@ type SelectionContextValue = {
   whileSelect: boolean
   virtualRef: VirtualReference
   onVirtualRefChange(reference: VirtualReference): void
+  trigger: HTMLDivElement | null
+  onTriggerChange(trigger: HTMLDivElement | null): void
   disabled: boolean
 }
 const [SelectionProvider, useSelectionContext] = createContext<SelectionContextValue>('Selection')
@@ -65,7 +67,7 @@ const Selection = (props: SelectionProps) => {
   const [virtualRef, setVirtualRef] = React.useState({
     getBoundingClientRect: () => DOMRect.fromRect(),
   })
-
+  const [trigger, setTrigger] = React.useState<HTMLDivElement | null>(null)
   const [open = false, setOpen] = useControllableState({
     prop: openProp,
     defaultProp: defaultOpen,
@@ -79,6 +81,8 @@ const Selection = (props: SelectionProps) => {
       whileSelect={whileSelect}
       virtualRef={virtualRef}
       onVirtualRefChange={setVirtualRef}
+      trigger={trigger}
+      onTriggerChange={setTrigger}
       disabled={disabled}
     >
       {children}
@@ -99,11 +103,12 @@ interface SelectionTriggerProps extends PrimitiveDivProps {}
 const SelectionTrigger = React.forwardRef<SelectionTriggerElement, SelectionTriggerProps>(
   (props, forwardedRef) => {
     const context = useSelectionContext(TRIGGER_NAME)
+    const composedRefs = useComposedRefs(forwardedRef, (node) => context.onTriggerChange(node))
 
     return context.whileSelect ? (
-      <SelectionTriggerWhileSelect {...props} ref={forwardedRef} />
+      <SelectionTriggerWhileSelect {...props} ref={composedRefs} />
     ) : (
-      <SelectionTriggerNonWhileSelect {...props} ref={forwardedRef} />
+      <SelectionTriggerNonWhileSelect {...props} ref={composedRefs} />
     )
   },
 )
@@ -154,6 +159,7 @@ const SelectionTriggerWhileSelect = React.forwardRef<
       {...props}
       ref={composedRefs}
       onPointerDown={(event) => {
+        props.onPointerDown?.(event)
         pointerTypeRef.current = event.pointerType
       }}
     />
@@ -291,6 +297,9 @@ interface SelectionContentImplProps extends PrimitiveDivProps {
   avoidCollisions?: boolean
 }
 
+let originalBodyUserSelect: string
+let originalTriggerUserSelect: string
+
 const SelectionContentImpl = React.forwardRef<
   SelectionContentImplElement,
   SelectionContentImplProps
@@ -359,7 +368,6 @@ const SelectionContentImpl = React.forwardRef<
     refs.setReference(context.virtualRef)
   }, [context.virtualRef, refs])
 
-
   React.useEffect(() => {
     if (!context.disabled) {
       const handlePointerDown = (event: PointerEvent) => {
@@ -377,6 +385,32 @@ const SelectionContentImpl = React.forwardRef<
       return () => document.removeEventListener('pointerdown', handlePointerDown)
     }
   }, [context.disabled, onOpenChange])
+
+  React.useEffect(() => {
+    if (context.whileSelect && context.trigger) {
+      const body = document.body
+      const trigger = context.trigger
+
+      originalBodyUserSelect = body.style.userSelect
+      originalTriggerUserSelect = trigger.style.userSelect
+
+      body.style.userSelect = 'none'
+      trigger.style.userSelect = 'text'
+
+      const handlePointerUp = () => {
+        body.style.userSelect = originalBodyUserSelect
+        trigger.style.userSelect = originalTriggerUserSelect
+      }
+
+      document.addEventListener('pointerup', handlePointerUp)
+
+      return () => {
+        body.style.userSelect = originalBodyUserSelect
+        trigger.style.userSelect = originalTriggerUserSelect
+        document.removeEventListener('pointerup', handlePointerUp)
+      }
+    }
+  }, [context.whileSelect, context.trigger])
 
   const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement)
 
