@@ -20,9 +20,9 @@ import {
   size,
   hide,
   arrow as floatingUIarrow,
-} from '@floating-ui/react'
+} from '@floating-ui/react-dom'
 
-import type { Placement, Middleware } from '@floating-ui/react'
+import type { Placement, Middleware } from '@floating-ui/react-dom'
 
 const SIDE_OPTIONS = ['top', 'right', 'bottom', 'left'] as const
 const ALIGN_OPTIONS = ['start', 'center', 'end'] as const
