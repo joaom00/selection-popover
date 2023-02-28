@@ -9,6 +9,7 @@ import {
   SelectionActionsBar,
 } from '@/components'
 import { SelectionTextToolbar } from '@/components/selection/TextToolbar'
+import { GitHubLogoIcon } from '@radix-ui/react-icons'
 
 export default function Home() {
   const [packagerManager] = usePackageManagerPreference()
@@ -18,9 +19,19 @@ export default function Home() {
       <div className="gradient" />
       <div className="absolute inset-0 bg-top pattern" />
       <main className="relative w-full md:max-w-3xl md:mx-auto lg:max-w-4xl mt-10">
-        <h1 className="text-mauve12 text-4xl font-medium text-center tracking-tighter mb-5">
-          Selection Popover
-        </h1>
+        <div className="flex justify-center items-center gap-4 mb-5">
+          <h1 className="text-mauve12 text-4xl font-medium text-center tracking-tighter">
+            Selection Popover
+          </h1>
+          <a
+            className="text-mauve11 hover:text-mauve12 transition-colors duration-150"
+            href="https://github.com/joaom00/selection-popover"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            <GitHubLogoIcon className="w-6 h-6" />
+          </a>
+        </div>
         <SelectionCopyCommand>
           <p className="text-sm tracking-tight bg-white rounded-full px-5 py-2 border border-gray6 max-w-max mx-auto mb-20 text-gray12">
             {PACKAGE_MANAGERS_COMMAND[packagerManager]}
