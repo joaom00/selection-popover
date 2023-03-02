@@ -1,6 +1,7 @@
 {
   "name": "selection-popover",
-  "version": "0.1.2",
+  "description": "Easy-to-use, composable react selection popover.",
+  "version": "0.1.3",
   "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -17,7 +18,8 @@
   "keywords": [
     "react",
     "selection",
-    "popover"
+    "popover",
+    "text-selection"
   ],
   "author": "João Pedro Magalhães <joaopsilvamagalhaes@gmail.com>",
   "peerDependencies": {
