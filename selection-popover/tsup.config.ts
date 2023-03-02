@@ -1,8 +1,10 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig({
-  sourcemap: false,
   minify: true,
+  target: 'es2018',
+  external: ['react', 'react-dom'],
+  sourcemap: false,
   dts: true,
   format: ['esm', 'cjs'],
   loader: {
