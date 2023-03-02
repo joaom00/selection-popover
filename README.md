@@ -1,10 +1,26 @@
 <p align="center">
-  <img src="./website/public/og.png" />
+  <a align='center' href="https://selection-popover.vercel.app">
+    <img src="./website/public/og.png" />
+  </a>
 </p>
 
-## Table of Contents
+<p align="center">
+  Easy-to-use, composable react selection popover
+</p>
 
-- [Install](#install)
+<div align="center">
+  <a href="https://www.npmjs.com/package/selection-popover">![npm version](https://img.shields.io/npm/v/selection-popover.svg)</a>
+  <a href="https://www.npmjs.com/package/selection-popover">![npm downloads](https://img.shields.io/npm/dm/selection-popover.svg)</a>
+</div>
+
+## Install
+
+```bash
+npm install selection-popover
+```
+
+## Content
+
 - [Anatomy](#anatomy)
 - [API Reference](#api-reference)
   - [Root](#root)
@@ -13,24 +29,18 @@
   - [Content](#content)
   - [Arrow](#arrow)
 - [Examples](#examples)
-  - [Unmount animations](#unmount-animations)
   - [Origin-aware animations](#origin-aware-animations)
   - [Collision-aware animations](#collision-aware-animations)
+  - [Unmount animations](#unmount-animations)
   - [Use with Radix Toolbar](#use-with-radix-toolbar)
 - [Acknowledge](#acknowledge)
-
-## Install
-
-```bash
-npm install selection-popover
-```
 
 ## Anatomy
 
 Import all parts and piece them together.
 
 ```jsx
-import * as Selection from 'selection-popover';
+import * as Selection from 'selection-popover'
 
 export default () => (
   <Selection.Root>
@@ -41,7 +51,7 @@ export default () => (
       </Selection.Content>
     </Selection.Portal>
   </Selection.Root>
-);
+)
 ```
 
 ## API Reference
@@ -56,7 +66,7 @@ Contains all the parts of a selection.
 | `open`         | `boolean`                 | -       | The controlled open state of the popover. Must be used in conjunction with `onOpenChange`.                          |
 | `onOpenChange` | `(open: boolean) => void` | -       | Event handler called when the open state of the popover changes.                                                    |
 | `whileSelect`  | `boolean`                 | `false` | When `true`, the popover will open while the text is selected, otherwise only when the mouse up.                    |
-| `disabled`  | `boolean`                 | `false` | When true, the popover won't open when text is selected.                     |
+| `disabled`     | `boolean`                 | `false` | When true, the popover won't open when text is selected.                                                            |
 
 ### Trigger
 
@@ -103,8 +113,8 @@ The component that pops out when a text is selected.
 | CSS Variable                                   | Description                                                                   |
 | ---------------------------------------------- | ----------------------------------------------------------------------------- |
 | `--selection-popover-content-transform-origin` | The `transform-origin` computed from the content and arrow positions/offsets. |
-| `--selection-popover-select-width`            | The width of the select.                                                     |
-| `--selection-popover-select-height`           | The height of the select.                                                    |
+| `--selection-popover-select-width`             | The width of the select.                                                      |
+| `--selection-popover-select-height`            | The height of the select.                                                     |
 
 ### Arrow
 
@@ -118,65 +128,13 @@ An optional arrow element to render alongside the popover. This can be used to h
 
 ## Examples
 
-### Unmount animations
-
-```jsx
-// index.jsx
-import * as Selection from 'selection-popover';
-import './styles.css';
-
-export default () => (
-  <Selection.Root>
-    <Selection.Trigger>...</Selection.Trigger>
-    <Selection.Portal>
-      <Selection.Content className="SelectionContent">...</Selection.Content>
-    </Selection.Portal>
-  </Selection.Root>
-);
-```
-
-```css
-/* styles.css */
-.SelectionContent {
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-.SelectionContent[data-state='open'] {
-  animation-name: slideDownAndFade;
-}
-.SelectionContent[data-state='closed'] {
-  animation-name: slideUpAndFade;
-}
-
-@keyframes slideDownAndFade {
-  from {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUpAndFade {
-  from {
-    opacity: 1;
-    transform: translateY(0));
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-2px);
-  }
-}
-```
 
 ### Origin-aware animations
 
 ```jsx
 // index.jsx
-import * as Selection from 'selection-popover';
-import './styles.css';
+import * as Selection from 'selection-popover'
+import './styles.css'
 
 export default () => (
   <Selection.Root>
@@ -185,7 +143,7 @@ export default () => (
       <Selection.Content className="SelectionContent">...</Selection.Content>
     </Selection.Portal>
   </Selection.Root>
-);
+)
 ```
 
 ```css
@@ -211,8 +169,8 @@ export default () => (
 
 ```jsx
 // index.jsx
-import * as Selection from 'selection-popover';
-import './styles.css';
+import * as Selection from 'selection-popover'
+import './styles.css'
 
 export default () => (
   <Selection.Root>
@@ -221,7 +179,7 @@ export default () => (
       <Selection.Content className="SelectionContent">...</Selection.Content>
     </Selection.Portal>
   </Selection.Root>
-);
+)
 ```
 
 ```css
@@ -260,11 +218,64 @@ export default () => (
 }
 ```
 
+### Unmount animations
+
+```jsx
+// index.jsx
+import * as Selection from 'selection-popover'
+import './styles.css'
+
+export default () => (
+  <Selection.Root>
+    <Selection.Trigger>...</Selection.Trigger>
+    <Selection.Portal>
+      <Selection.Content className="SelectionContent">...</Selection.Content>
+    </Selection.Portal>
+  </Selection.Root>
+)
+```
+
+```css
+/* styles.css */
+.SelectionContent {
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+.SelectionContent[data-state='open'] {
+  animation-name: slideDownAndFade;
+}
+.SelectionContent[data-state='closed'] {
+  animation-name: slideUpAndFade;
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUpAndFade {
+  from {
+    opacity: 1;
+    transform: translateY(0));
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+```
+
 ### Use with [Radix Toolbar](https://www.radix-ui.com/docs/primitives/components/toolbar)
 
 ```jsx
-import * as Selection from 'selection-popover';
-import * as Toolbar from '@radix-ui/react-toolbar';
+import * as Selection from 'selection-popover'
+import * as Toolbar from '@radix-ui/react-toolbar'
 
 export default () => (
   <Selection.Root>
@@ -276,7 +287,7 @@ export default () => (
       </Selection.Content>
     </Selection.Portal>
   </Selection.Root>
-);
+)
 ```
 
 ## Acknowledge
