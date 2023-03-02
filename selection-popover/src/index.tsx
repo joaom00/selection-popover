@@ -42,7 +42,7 @@ type SelectionContextValue = {
   onOpenChange(open: boolean): void
   whileSelect: boolean
   virtualRef: VirtualReference
-  onVirtualRefChange(reference: VirtualReference): void
+  onVirtualRefChange(virtualRef: VirtualReference): void
   trigger: HTMLDivElement | null
   onTriggerChange(trigger: HTMLDivElement | null): void
   disabled: boolean
@@ -322,6 +322,10 @@ const SelectionContentImpl = React.forwardRef<
   const context = useSelectionContext(CONTENT_NAME)
   const { onOpenChange } = context
 
+  const [disablePointerEvents, setDisablePointerEvents] = React.useState(false)
+  const [content, setContent] = React.useState<HTMLDivElement | null>(null)
+  const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node))
+
   const [arrow, setArrow] = React.useState<HTMLSpanElement | null>(null)
   const arrowSize = useSize(arrow)
   const arrowWidth = arrowSize?.width ?? 0
@@ -374,6 +378,7 @@ const SelectionContentImpl = React.forwardRef<
     if (!context.disabled) {
       const handlePointerDown = (event: PointerEvent) => {
         if (event.pointerType !== 'mouse') return
+        setDisablePointerEvents(true)
 
         // Ensure to get latest selection
         setTimeout(() => {
@@ -389,7 +394,7 @@ const SelectionContentImpl = React.forwardRef<
   }, [context.disabled, onOpenChange])
 
   React.useEffect(() => {
-    if (context.whileSelect && context.trigger) {
+    if (context.trigger && context.whileSelect) {
       const body = document.body
       const trigger = context.trigger
 
@@ -399,13 +404,15 @@ const SelectionContentImpl = React.forwardRef<
       body.style.userSelect = 'none'
       trigger.style.userSelect = 'text'
 
+      setDisablePointerEvents(true)
+
       const handlePointerUp = () => {
         body.style.userSelect = originalBodyUserSelect
         trigger.style.userSelect = originalTriggerUserSelect
+        setDisablePointerEvents(false)
       }
 
       document.addEventListener('pointerup', handlePointerUp)
-
       return () => {
         body.style.userSelect = originalBodyUserSelect
         trigger.style.userSelect = originalTriggerUserSelect
@@ -420,6 +427,11 @@ const SelectionContentImpl = React.forwardRef<
   const arrowY = middlewareData.arrow?.y
   const cannotCenterArrow = middlewareData.arrow?.centerOffset !== 0
 
+  const [contentZIndex, setContentZIndex] = React.useState<string>()
+  useLayoutEffect(() => {
+    if (content) setContentZIndex(window.getComputedStyle(content).zIndex)
+  }, [content])
+
   return (
     <div
       ref={refs.setFloating}
@@ -431,7 +443,8 @@ const SelectionContentImpl = React.forwardRef<
           ? `translate3d(${Math.round(x ?? 0)}px, ${Math.round(y ?? 0)}px, 0)`
           : 'translate3d(0, -200%, 0)',
         minWidth: 'max-content',
-        zIndex: contentProps.style?.zIndex,
+        zIndex: contentZIndex,
+        pointerEvents: disablePointerEvents ? 'none' : undefined,
       }}
     >
       <SelectionContentProvider
@@ -446,10 +459,11 @@ const SelectionContentImpl = React.forwardRef<
           data-align={placedAlign}
           data-state={context.open ? 'open' : 'closed'}
           {...contentProps}
-          ref={forwardedRef}
+          ref={composedRefs}
           style={{
             userSelect: 'none',
             ...contentProps.style,
+            pointerEvents: disablePointerEvents ? 'none' : contentProps.style?.pointerEvents,
             animation: !isPositioned ? 'none' : undefined,
             opacity: middlewareData.hide?.referenceHidden ? 0 : undefined,
             ['--selection-popover-content-transform-origin' as any]: [
