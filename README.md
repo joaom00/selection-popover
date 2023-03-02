@@ -9,8 +9,10 @@
 </p>
 
 <div align="center">
+
   <a href="https://www.npmjs.com/package/selection-popover">![npm version](https://img.shields.io/npm/v/selection-popover.svg)</a>
   <a href="https://www.npmjs.com/package/selection-popover">![npm downloads](https://img.shields.io/npm/dm/selection-popover.svg)</a>
+  
 </div>
 
 ## Install
