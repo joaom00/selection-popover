@@ -42,8 +42,8 @@ export default function Home() {
             <TabsTrigger value="action-bar">Action bar</TabsTrigger>
             <TabsTrigger value="editor-toolbar">Text formatting toolbar</TabsTrigger>
           </TabsList>
-          <SelectionActionsBar>
-            <TabsContent value="action-bar">
+          <TabsContent asChild value="action-bar">
+            <SelectionActionsBar>
               <div className="w-full px-6 py-12 bg-white rounded-md shadow-xl shadow-mauve12/10 ring-1 ring-mauve6 lg:pt-16 lg:pb-28">
                 <div className="prose prose-slate mx-auto lg:prose-lg">
                   <p className="lead">
@@ -106,11 +106,11 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-            </TabsContent>
-          </SelectionActionsBar>
+            </SelectionActionsBar>
+          </TabsContent>
 
-          <SelectionTextToolbar>
-            <TabsContent asChild value="editor-toolbar">
+          <TabsContent asChild value="editor-toolbar">
+            <SelectionTextToolbar>
               <div className="w-full px-6 py-12 bg-white rounded-md shadow-xl shadow-mauve12/10 ring-1 ring-mauve6 lg:pt-16 lg:pb-28">
                 <div className="prose prose-slate mx-auto lg:prose-lg">
                   <h2>What to expect from here on out</h2>
@@ -168,8 +168,8 @@ export default function Home() {
                   <p>And that&apos;s the end of this section.</p>
                 </div>
               </div>
-            </TabsContent>
-          </SelectionTextToolbar>
+            </SelectionTextToolbar>
+          </TabsContent>
         </Tabs>
       </main>
       <div className="relative text-mauve11 text-center mt-20 text-sm flex items-center justify-center gap-1">

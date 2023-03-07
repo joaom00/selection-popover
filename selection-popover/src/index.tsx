@@ -17,9 +17,9 @@ import {
   shift,
   limitShift,
   flip,
-  size,
   hide,
   arrow as floatingUIarrow,
+  inline,
 } from '@floating-ui/react-dom'
 
 import type { Placement, Middleware } from '@floating-ui/react-dom'
@@ -36,6 +36,7 @@ type Align = (typeof ALIGN_OPTIONS)[number]
 
 type VirtualReference = {
   getBoundingClientRect(): DOMRect
+  getClientRects(): DOMRectList
 }
 type SelectionContextValue = {
   open: boolean
@@ -68,6 +69,7 @@ const Selection = (props: SelectionProps) => {
   } = props
   const [virtualRef, setVirtualRef] = React.useState({
     getBoundingClientRect: () => DOMRect.fromRect(),
+    getClientRects: () => new DOMRectList(),
   })
   const [trigger, setTrigger] = React.useState<HTMLDivElement | null>(null)
   const [open = false, setOpen] = useControllableState({
@@ -139,15 +141,13 @@ const SelectionTriggerWhileSelect = React.forwardRef<
         const selection = document.getSelection()
         if (!selection) return
         if (selection.isCollapsed) return onOpenChange(false)
-        const trigger = ref.current
-        const wasSelectionInsideTrigger = trigger?.contains(selection.anchorNode)
-        if (!wasSelectionInsideTrigger) return
         const hasTextSelected = selection.toString().trim() !== ''
         if (hasTextSelected) {
           const range = selection.getRangeAt(0)
           onOpenChange(true)
           onVirtualRefChange({
             getBoundingClientRect: () => range.getBoundingClientRect(),
+            getClientRects: () => range.getClientRects(),
           })
         }
       }
@@ -193,14 +193,12 @@ const SelectionTriggerNonWhileSelect = React.forwardRef<
           const selection = document.getSelection()
           if (!selection) return
           if (selection.isCollapsed) return onOpenChange(false)
-          const trigger = ref.current
-          const wasSelectionInsideTrigger = trigger?.contains(selection.anchorNode)
-          if (!wasSelectionInsideTrigger) return
           const range = selection?.getRangeAt(0)
           if (range) {
             onOpenChange(true)
             onVirtualRefChange({
               getBoundingClientRect: () => range.getBoundingClientRect(),
+              getClientRects: () => range.getClientRects(),
             })
           }
         })
@@ -352,8 +350,10 @@ const SelectionContentImpl = React.forwardRef<
     placement: desiredPlacement,
     whileElementsMounted: autoUpdate,
     middleware: [
+      inline(),
       anchorCssProperties(),
       offset({ mainAxis: sideOffset + arrowHeight, alignmentAxis: alignOffset }),
+      avoidCollisions ? flip(detectOverflowOptions) : undefined,
       avoidCollisions
         ? shift({
             mainAxis: true,
@@ -363,8 +363,6 @@ const SelectionContentImpl = React.forwardRef<
           })
         : undefined,
       arrow ? floatingUIarrow({ element: arrow, padding: arrowPadding }) : undefined,
-      avoidCollisions ? flip(detectOverflowOptions) : undefined,
-      size(detectOverflowOptions),
       transformOrigin({ arrowWidth, arrowHeight }),
       hideWhenDetached ? hide({ strategy: 'referenceHidden' }) : undefined,
     ],
@@ -378,7 +376,7 @@ const SelectionContentImpl = React.forwardRef<
     if (!context.disabled) {
       const handlePointerDown = (event: PointerEvent) => {
         if (event.pointerType !== 'mouse') return
-        setDisablePointerEvents(true)
+        if(context.whileSelect) setDisablePointerEvents(true)
 
         // Ensure to get latest selection
         setTimeout(() => {
@@ -391,7 +389,7 @@ const SelectionContentImpl = React.forwardRef<
       document.addEventListener('pointerdown', handlePointerDown)
       return () => document.removeEventListener('pointerdown', handlePointerDown)
     }
-  }, [context.disabled, onOpenChange])
+  }, [context.disabled, context.whileSelect, onOpenChange])
 
   React.useEffect(() => {
     if (context.trigger && context.whileSelect) {
@@ -414,9 +412,9 @@ const SelectionContentImpl = React.forwardRef<
 
       document.addEventListener('pointerup', handlePointerUp)
       return () => {
+        document.removeEventListener('pointerup', handlePointerUp)
         body.style.userSelect = originalBodyUserSelect
         trigger.style.userSelect = originalTriggerUserSelect
-        document.removeEventListener('pointerup', handlePointerUp)
       }
     }
   }, [context.whileSelect, context.trigger])
@@ -549,11 +547,16 @@ function getSideAndAlignFromPlacement(placement: Placement) {
 
 const anchorCssProperties = (): Middleware => ({
   name: 'anchorCssProperties',
-  fn(data) {
-    const { rects, elements } = data
+  async fn(data) {
+    const { rects, elements, platform } = data
     const { width, height } = rects.reference
+    const { width: popoverWidth, height: popoverHeight } = rects.floating
     elements.floating.style.setProperty('--selection-popover-select-width', `${width}px`)
     elements.floating.style.setProperty('--selection-popover-select-height', `${height}px`)
+    const newDimensions = await platform.getDimensions(elements.floating)
+    if (popoverWidth !== newDimensions.width || popoverHeight !== newDimensions.height) {
+      return { reset: { rects: true } }
+    }
     return {}
   },
 })
