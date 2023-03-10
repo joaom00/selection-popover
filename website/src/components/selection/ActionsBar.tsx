@@ -1,13 +1,23 @@
+import React from 'react'
 import * as Selection from 'selection-popover'
 import { TwitterLogoIcon, GitHubLogoIcon, CopyIcon } from '@radix-ui/react-icons'
 import clsx from 'clsx'
 
 import { Button, Tooltip } from '@/components'
 
-export const SelectionActionsBar = ({ children }: { children: React.ReactNode }) => {
+type SelectionActionsBarElement = React.ElementRef<typeof Selection.Trigger>
+type SelectionActionsBarProps = {
+  children: React.ReactNode
+}
+export const SelectionActionsBar = React.forwardRef<
+  SelectionActionsBarElement,
+  SelectionActionsBarProps
+>(({ children }, forwardedRef) => {
   return (
     <Selection.Root>
-      <Selection.Trigger asChild>{children}</Selection.Trigger>
+      <Selection.Trigger ref={forwardedRef} asChild>
+        {children}
+      </Selection.Trigger>
       <Selection.Portal>
         <Selection.Content
           sideOffset={8}
@@ -40,4 +50,5 @@ export const SelectionActionsBar = ({ children }: { children: React.ReactNode })
       </Selection.Portal>
     </Selection.Root>
   )
-}
+})
+SelectionActionsBar.displayName = 'SelectionActionsBar'

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import * as Selection from 'selection-popover'
 import * as ToolbarPrimitive from '@radix-ui/react-toolbar'
 import { FontBoldIcon, FontItalicIcon, StrikethroughIcon } from '@radix-ui/react-icons'
@@ -17,28 +17,19 @@ import {
   SelectItem,
 } from '@/components'
 
-const textItems = [
-  'Text',
-  'Heading 1',
-  'Heading 2',
-  'Heading 3',
-  'Page',
-  'To-do list',
-  'Bulleted list',
-  'Numbered list',
-  'Toggle list',
-  'Code',
-  'Quote',
-  'Callout',
-  'Block equation',
-]
-
-const colorItems = ['Gray', 'Brown', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink', 'Red']
-
-export const SelectionTextToolbar = ({ children }: { children: React.ReactNode }) => {
+type SelectionTextToolbarElement = React.ElementRef<typeof Selection.Trigger>
+type SelectionTextToolbarProps = {
+  children: React.ReactNode
+}
+export const SelectionTextToolbar = React.forwardRef<
+  SelectionTextToolbarElement,
+  SelectionTextToolbarProps
+>(({ children }, forwardedRef) => {
   return (
     <Selection.Root whileSelect>
-      <Selection.Trigger asChild>{children}</Selection.Trigger>
+      <Selection.Trigger ref={forwardedRef} asChild>
+        {children}
+      </Selection.Trigger>
       <Selection.Portal>
         <Selection.Content
           asChild
@@ -97,4 +88,23 @@ export const SelectionTextToolbar = ({ children }: { children: React.ReactNode }
       </Selection.Portal>
     </Selection.Root>
   )
-}
+})
+SelectionTextToolbar.displayName = 'SelectionTextToolbar'
+
+const textItems = [
+  'Text',
+  'Heading 1',
+  'Heading 2',
+  'Heading 3',
+  'Page',
+  'To-do list',
+  'Bulleted list',
+  'Numbered list',
+  'Toggle list',
+  'Code',
+  'Quote',
+  'Callout',
+  'Block equation',
+]
+
+const colorItems = ['Gray', 'Brown', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink', 'Red']
