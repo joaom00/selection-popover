@@ -10,9 +10,9 @@
 
 <div align="center">
 
-  <a href="https://www.npmjs.com/package/selection-popover">![npm version](https://img.shields.io/npm/v/selection-popover.svg)</a>
-  <a href="https://www.npmjs.com/package/selection-popover">![npm downloads](https://img.shields.io/npm/dm/selection-popover.svg)</a>
-  
+<a href="https://www.npmjs.com/package/selection-popover">![npm version](https://img.shields.io/npm/v/selection-popover.svg)</a>
+<a href="https://www.npmjs.com/package/selection-popover">![npm downloads](https://img.shields.io/npm/dm/selection-popover.svg)</a>
+
 </div>
 
 ## Install
@@ -129,7 +129,6 @@ An optional arrow element to render alongside the popover. This can be used to h
 | `height`  | `number`  | `5`     | The height of the arrow in pixels.                                                                                                                                                                            |
 
 ## Examples
-
 
 ### Origin-aware animations
 
@@ -292,7 +291,7 @@ export default () => (
 )
 ```
 
-## Acknowledge
+## Acknowledgements
 
 - API heavily inspired on [Radix UI](https://www.radix-ui.com/)
 - Inspired by this [tweet](https://twitter.com/TobiasWhetton/status/1612821266242715648) from [Tobias Whetton](https://twitter.com/TobiasWhetton)
