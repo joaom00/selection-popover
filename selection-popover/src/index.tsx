@@ -1,5 +1,3 @@
-'use client'
-
 import * as React from 'react'
 import { createContext } from '@radix-ui/react-context'
 import { useComposedRefs } from '@radix-ui/react-compose-refs'
@@ -17,9 +15,9 @@ import {
   shift,
   limitShift,
   flip,
-  size,
   hide,
   arrow as floatingUIarrow,
+  inline,
 } from '@floating-ui/react-dom'
 
 import type { Placement, Middleware } from '@floating-ui/react-dom'
@@ -36,6 +34,7 @@ type Align = (typeof ALIGN_OPTIONS)[number]
 
 type VirtualReference = {
   getBoundingClientRect(): DOMRect
+  getClientRects(): DOMRectList
 }
 type SelectionContextValue = {
   open: boolean
@@ -43,8 +42,8 @@ type SelectionContextValue = {
   whileSelect: boolean
   virtualRef: VirtualReference
   onVirtualRefChange(virtualRef: VirtualReference): void
-  trigger: HTMLDivElement | null
-  onTriggerChange(trigger: HTMLDivElement | null): void
+  content: HTMLDivElement | null
+  onContentChange(content: HTMLDivElement | null): void
   disabled: boolean
 }
 const [SelectionProvider, useSelectionContext] = createContext<SelectionContextValue>('Selection')
@@ -68,8 +67,9 @@ const Selection = (props: SelectionProps) => {
   } = props
   const [virtualRef, setVirtualRef] = React.useState({
     getBoundingClientRect: () => DOMRect.fromRect(),
+    getClientRects: () => new DOMRectList(),
   })
-  const [trigger, setTrigger] = React.useState<HTMLDivElement | null>(null)
+  const [content, setContent] = React.useState<HTMLDivElement | null>(null)
   const [open = false, setOpen] = useControllableState({
     prop: openProp,
     defaultProp: defaultOpen,
@@ -83,8 +83,8 @@ const Selection = (props: SelectionProps) => {
       whileSelect={whileSelect}
       virtualRef={virtualRef}
       onVirtualRefChange={setVirtualRef}
-      trigger={trigger}
-      onTriggerChange={setTrigger}
+      content={content}
+      onContentChange={setContent}
       disabled={disabled}
     >
       {children}
@@ -98,19 +98,39 @@ const Selection = (props: SelectionProps) => {
 
 const TRIGGER_NAME = 'SelectionTrigger'
 
-type SelectionTriggerElement = React.ElementRef<typeof Primitive.div>
-type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
-interface SelectionTriggerProps extends PrimitiveDivProps {}
+type SelectionTriggerElement = SelectionTriggerImplElement
+interface SelectionTriggerProps extends SelectionTriggerImplProps {}
 
 const SelectionTrigger = React.forwardRef<SelectionTriggerElement, SelectionTriggerProps>(
   (props, forwardedRef) => {
     const context = useSelectionContext(TRIGGER_NAME)
-    const composedRefs = useComposedRefs(forwardedRef, (node) => context.onTriggerChange(node))
 
     return context.whileSelect ? (
-      <SelectionTriggerWhileSelect {...props} ref={composedRefs} />
+      <SelectionTriggerWhileSelect {...props} ref={forwardedRef} />
     ) : (
-      <SelectionTriggerNonWhileSelect {...props} ref={composedRefs} />
+      <SelectionTriggerImpl
+        {...props}
+        ref={forwardedRef}
+        onPointerUp={(event) => {
+          props.onPointerUp?.(event)
+
+          if (event.pointerType !== 'mouse') return
+          setTimeout(() => {
+            const selection = document.getSelection()
+            if (!selection) return
+            if (selection.toString().trim() === '') return
+            if (selection.isCollapsed) return context.onOpenChange(false)
+            const range = selection?.getRangeAt(0)
+            if (range) {
+              context.onOpenChange(true)
+              context.onVirtualRefChange({
+                getBoundingClientRect: () => range.getBoundingClientRect(),
+                getClientRects: () => range.getClientRects(),
+              })
+            }
+          })
+        }}
+      />
     )
   },
 )
@@ -119,17 +139,24 @@ SelectionTrigger.displayName = TRIGGER_NAME
 
 /* ---------------------------------------------------------------------------------------------- */
 
-type SelectionTriggerWhileSelectElement = SelectionTriggerElement
-interface SelectionTriggerWhileSelectProps extends SelectionTriggerProps {}
+let originalBodyUserSelect: string
+
+type SelectionTriggerWhileSelectElement = SelectionTriggerImplElement
+interface SelectionTriggerWhileSelectProps extends SelectionTriggerImplProps {}
 
 const SelectionTriggerWhileSelect = React.forwardRef<
   SelectionTriggerWhileSelectElement,
   SelectionTriggerWhileSelectProps
 >((props, forwardedRef) => {
   const context = useSelectionContext(TRIGGER_NAME)
+  const [containSelection, setContainSelection] = React.useState(false)
   const ref = React.useRef<HTMLDivElement>(null)
   const pointerTypeRef = React.useRef('')
   const composedRefs = useComposedRefs(forwardedRef, ref)
+  const handlePointerUp = React.useCallback(() => {
+    setContainSelection(false)
+  }, [])
+
   const { onOpenChange, onVirtualRefChange } = context
 
   React.useEffect(() => {
@@ -138,16 +165,17 @@ const SelectionTriggerWhileSelect = React.forwardRef<
         if (pointerTypeRef.current !== 'mouse') return
         const selection = document.getSelection()
         if (!selection) return
-        if (selection.isCollapsed) return onOpenChange(false)
-        const trigger = ref.current
-        const wasSelectionInsideTrigger = trigger?.contains(selection.anchorNode)
+        const node = ref.current
+        const wasSelectionInsideTrigger = node?.contains(selection.anchorNode)
         if (!wasSelectionInsideTrigger) return
+        if (selection.isCollapsed) return onOpenChange(false)
         const hasTextSelected = selection.toString().trim() !== ''
         if (hasTextSelected) {
           const range = selection.getRangeAt(0)
           onOpenChange(true)
           onVirtualRefChange({
             getBoundingClientRect: () => range.getBoundingClientRect(),
+            getClientRects: () => range.getClientRects(),
           })
         }
       }
@@ -156,13 +184,42 @@ const SelectionTriggerWhileSelect = React.forwardRef<
     }
   }, [context.disabled, onOpenChange, onVirtualRefChange])
 
+  React.useEffect(() => {
+    if (containSelection) {
+      const body = document.body
+
+      // Safari requires prefix
+      originalBodyUserSelect = body.style.userSelect || body.style.webkitUserSelect
+
+      body.style.userSelect = 'none'
+      body.style.webkitUserSelect = 'none'
+
+      return () => {
+        body.style.userSelect = originalBodyUserSelect
+        body.style.webkitUserSelect = originalBodyUserSelect
+      }
+    }
+  }, [containSelection])
+
+  React.useEffect(() => {
+    return () => document.removeEventListener('pointerup', handlePointerUp)
+  }, [handlePointerUp])
+
   return (
-    <Primitive.div
+    <SelectionTriggerImpl
       {...props}
       ref={composedRefs}
       onPointerDown={(event) => {
         props.onPointerDown?.(event)
+
         pointerTypeRef.current = event.pointerType
+        setContainSelection(true)
+        document.addEventListener('pointerup', handlePointerUp, { once: true })
+      }}
+      style={{
+        ...props.style,
+        userSelect: containSelection ? 'text' : undefined,
+        WebkitUserSelect: containSelection ? 'text' : undefined,
       }}
     />
   )
@@ -170,47 +227,49 @@ const SelectionTriggerWhileSelect = React.forwardRef<
 
 /* ---------------------------------------------------------------------------------------------- */
 
-type SelectionTriggerNonWhileSelectElement = SelectionTriggerElement
-interface SelectionTriggerNonWhileSelectProps extends SelectionTriggerProps {}
+type SelectionTriggerImplElement = React.ElementRef<typeof Primitive.div>
+type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
+interface SelectionTriggerImplProps extends PrimitiveDivProps {}
 
-const SelectionTriggerNonWhileSelect = React.forwardRef<
-  SelectionTriggerNonWhileSelectElement,
-  SelectionTriggerNonWhileSelectProps
+const SelectionTriggerImpl = React.forwardRef<
+  SelectionTriggerImplElement,
+  SelectionTriggerImplProps
 >((props, forwardedRef) => {
   const context = useSelectionContext(TRIGGER_NAME)
-  const ref = React.useRef<HTMLDivElement>(null)
-  const { onOpenChange, onVirtualRefChange } = context
-  const composedRefs = useComposedRefs(forwardedRef, ref)
+  const [disablePointerEvents, setDisablePointerEvents] = React.useState(false)
+  const handlePointerUp = React.useCallback(() => {
+    setDisablePointerEvents(false)
+  }, [])
 
   React.useEffect(() => {
-    if (!context.disabled) {
-      const trigger = ref.current
-      if (!trigger) return
+    if (context.content && disablePointerEvents) {
+      const content = context.content
+      const originalContentPointerEvents = content.style.pointerEvents
 
-      const handlePointerUp = (event: PointerEvent) => {
-        if (event.pointerType !== 'mouse') return
-        setTimeout(() => {
-          const selection = document.getSelection()
-          if (!selection) return
-          if (selection.isCollapsed) return onOpenChange(false)
-          const trigger = ref.current
-          const wasSelectionInsideTrigger = trigger?.contains(selection.anchorNode)
-          if (!wasSelectionInsideTrigger) return
-          const range = selection?.getRangeAt(0)
-          if (range) {
-            onOpenChange(true)
-            onVirtualRefChange({
-              getBoundingClientRect: () => range.getBoundingClientRect(),
-            })
-          }
-        })
+      content.style.pointerEvents = 'none'
+
+      return () => {
+        content.style.pointerEvents = originalContentPointerEvents
       }
-      trigger.addEventListener('pointerup', handlePointerUp)
-      return () => trigger.removeEventListener('pointerup', handlePointerUp)
     }
-  }, [onOpenChange, onVirtualRefChange, context.disabled])
+  }, [context.content, disablePointerEvents])
 
-  return <Primitive.div {...props} ref={composedRefs} />
+  React.useEffect(() => {
+    return () => document.removeEventListener('pointerup', handlePointerUp)
+  }, [handlePointerUp])
+
+  return (
+    <Primitive.div
+      {...props}
+      ref={forwardedRef}
+      onPointerDown={(event) => {
+        props.onPointerDown?.(event)
+
+        setDisablePointerEvents(true)
+        document.addEventListener('pointerup', handlePointerUp, { once: true })
+      }}
+    />
+  )
 })
 
 /* -------------------------------------------------------------------------------------------------
@@ -299,9 +358,6 @@ interface SelectionContentImplProps extends PrimitiveDivProps {
   avoidCollisions?: boolean
 }
 
-let originalBodyUserSelect: string
-let originalTriggerUserSelect: string
-
 const SelectionContentImpl = React.forwardRef<
   SelectionContentImplElement,
   SelectionContentImplProps
@@ -320,9 +376,8 @@ const SelectionContentImpl = React.forwardRef<
     ...contentProps
   } = props
   const context = useSelectionContext(CONTENT_NAME)
-  const { onOpenChange } = context
+  const { onOpenChange, onContentChange } = context
 
-  const [disablePointerEvents, setDisablePointerEvents] = React.useState(false)
   const [content, setContent] = React.useState<HTMLDivElement | null>(null)
   const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node))
 
@@ -352,8 +407,10 @@ const SelectionContentImpl = React.forwardRef<
     placement: desiredPlacement,
     whileElementsMounted: autoUpdate,
     middleware: [
+      inline(),
       anchorCssProperties(),
       offset({ mainAxis: sideOffset + arrowHeight, alignmentAxis: alignOffset }),
+      avoidCollisions ? flip(detectOverflowOptions) : undefined,
       avoidCollisions
         ? shift({
             mainAxis: true,
@@ -363,8 +420,6 @@ const SelectionContentImpl = React.forwardRef<
           })
         : undefined,
       arrow ? floatingUIarrow({ element: arrow, padding: arrowPadding }) : undefined,
-      avoidCollisions ? flip(detectOverflowOptions) : undefined,
-      size(detectOverflowOptions),
       transformOrigin({ arrowWidth, arrowHeight }),
       hideWhenDetached ? hide({ strategy: 'referenceHidden' }) : undefined,
     ],
@@ -372,54 +427,27 @@ const SelectionContentImpl = React.forwardRef<
 
   useLayoutEffect(() => {
     refs.setReference(context.virtualRef)
-  }, [context.virtualRef, refs])
+    onContentChange(refs.floating.current as HTMLDivElement)
+  }, [context.virtualRef, onContentChange, refs])
 
   React.useEffect(() => {
-    if (!context.disabled) {
-      const handlePointerDown = (event: PointerEvent) => {
-        if (event.pointerType !== 'mouse') return
-        setDisablePointerEvents(true)
-
-        // Ensure to get latest selection
-        setTimeout(() => {
-          const selection = document.getSelection()
-          if (selection?.isCollapsed) {
-            onOpenChange(false)
-          }
-        })
-      }
-      document.addEventListener('pointerdown', handlePointerDown)
-      return () => document.removeEventListener('pointerdown', handlePointerDown)
+    const handlePointer = () => {
+      // Ensure to get latest selection
+      setTimeout(() => {
+        const selection = document.getSelection()
+        if (selection?.isCollapsed) {
+          onOpenChange(false)
+        }
+      })
     }
-  }, [context.disabled, onOpenChange])
 
-  React.useEffect(() => {
-    if (context.trigger && context.whileSelect) {
-      const body = document.body
-      const trigger = context.trigger
-
-      originalBodyUserSelect = body.style.userSelect
-      originalTriggerUserSelect = trigger.style.userSelect
-
-      body.style.userSelect = 'none'
-      trigger.style.userSelect = 'text'
-
-      setDisablePointerEvents(true)
-
-      const handlePointerUp = () => {
-        body.style.userSelect = originalBodyUserSelect
-        trigger.style.userSelect = originalTriggerUserSelect
-        setDisablePointerEvents(false)
-      }
-
-      document.addEventListener('pointerup', handlePointerUp)
-      return () => {
-        body.style.userSelect = originalBodyUserSelect
-        trigger.style.userSelect = originalTriggerUserSelect
-        document.removeEventListener('pointerup', handlePointerUp)
-      }
+    document.addEventListener('pointerdown', handlePointer)
+    document.addEventListener('pointerup', handlePointer)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointer)
+      document.removeEventListener('pointerup', handlePointer)
     }
-  }, [context.whileSelect, context.trigger])
+  }, [onOpenChange])
 
   const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement)
 
@@ -444,7 +472,6 @@ const SelectionContentImpl = React.forwardRef<
           : 'translate3d(0, -200%, 0)',
         minWidth: 'max-content',
         zIndex: contentZIndex,
-        pointerEvents: disablePointerEvents ? 'none' : undefined,
       }}
     >
       <SelectionContentProvider
@@ -463,7 +490,6 @@ const SelectionContentImpl = React.forwardRef<
           style={{
             userSelect: 'none',
             ...contentProps.style,
-            pointerEvents: disablePointerEvents ? 'none' : contentProps.style?.pointerEvents,
             animation: !isPositioned ? 'none' : undefined,
             opacity: middlewareData.hide?.referenceHidden ? 0 : undefined,
             ['--selection-popover-content-transform-origin' as any]: [
@@ -549,11 +575,16 @@ function getSideAndAlignFromPlacement(placement: Placement) {
 
 const anchorCssProperties = (): Middleware => ({
   name: 'anchorCssProperties',
-  fn(data) {
-    const { rects, elements } = data
+  async fn(data) {
+    const { rects, elements, platform } = data
     const { width, height } = rects.reference
+    const { width: popoverWidth, height: popoverHeight } = rects.floating
     elements.floating.style.setProperty('--selection-popover-select-width', `${width}px`)
     elements.floating.style.setProperty('--selection-popover-select-height', `${height}px`)
+    const newDimensions = await platform.getDimensions(elements.floating)
+    if (popoverWidth !== newDimensions.width || popoverHeight !== newDimensions.height) {
+      return { reset: { rects: true } }
+    }
     return {}
   },
 })
