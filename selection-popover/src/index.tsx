@@ -118,6 +118,7 @@ const SelectionTrigger = React.forwardRef<SelectionTriggerElement, SelectionTrig
           setTimeout(() => {
             const selection = document.getSelection()
             if (!selection) return
+            if (selection.toString().trim() === '') return
             if (selection.isCollapsed) return context.onOpenChange(false)
             const range = selection?.getRangeAt(0)
             if (range) {
