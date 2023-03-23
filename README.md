@@ -35,7 +35,7 @@ npm install selection-popover
   - [Collision-aware animations](#collision-aware-animations)
   - [Unmount animations](#unmount-animations)
   - [Use with Radix Toolbar](#use-with-radix-toolbar)
-- [Acknowledge](#acknowledge)
+- [Acknowledgements](#acknowledgements)
 
 ## Anatomy
 
