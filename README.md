@@ -69,6 +69,8 @@ Contains all the parts of a selection.
 | `onOpenChange` | `(open: boolean) => void` | -       | Event handler called when the open state of the popover changes.                                                    |
 | `whileSelect`  | `boolean`                 | `false` | When `true`, the popover will open while the text is selected, otherwise only when the mouse up.                    |
 | `disabled`     | `boolean`                 | `false` | When true, the popover won't open when text is selected.                                                            |
+| `openDelay`    | `number`                  | `0`     | The duration from when release the mouse until the content opens. In `whileSelect` is when you start the selection. |
+| `closeDelay`   | `number`                  | `0`     | The duration from when you click outside of the content until the content closes.                                   |
 
 ### Trigger
 
