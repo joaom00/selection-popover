@@ -143,9 +143,6 @@ const SelectionTrigger = React.forwardRef<SelectionTriggerElement, SelectionTrig
             const selection = document.getSelection()
             if (!selection) return
             const trigger = ref.current
-            // const wasSelectionInsideTrigger = [selection.anchorNode, selection.focusNode].every(
-            //   (selectionNode) => trigger?.contains(selectionNode),
-            // )
             const wasSelectionInsideTrigger = trigger?.contains(selection.anchorNode)
             if (!wasSelectionInsideTrigger) return
             if (selection.toString().trim() === '') return
