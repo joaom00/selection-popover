@@ -6,6 +6,7 @@ import { useControllableState } from '@radix-ui/react-use-controllable-state'
 import { Primitive } from '@radix-ui/react-primitive'
 import { useSize } from '@radix-ui/react-use-size'
 import { Portal as PortalPrimitive } from '@radix-ui/react-portal'
+import { DismissableLayer } from '@radix-ui/react-dismissable-layer'
 import { useLayoutEffect } from '@radix-ui/react-use-layout-effect'
 import * as ArrowPrimitive from '@radix-ui/react-arrow'
 import {
@@ -120,7 +121,7 @@ const Selection = (props: SelectionProps) => {
 const TRIGGER_NAME = 'SelectionTrigger'
 
 type SelectionTriggerElement = SelectionTriggerImplElement
-interface SelectionTriggerProps extends SelectionTriggerImplProps {}
+interface SelectionTriggerProps extends SelectionTriggerImplProps { }
 
 const SelectionTrigger = React.forwardRef<SelectionTriggerElement, SelectionTriggerProps>(
   (props, forwardedRef) => {
@@ -167,7 +168,7 @@ SelectionTrigger.displayName = TRIGGER_NAME
 let originalBodyUserSelect: string
 
 type SelectionTriggerWhileSelectElement = SelectionTriggerImplElement
-interface SelectionTriggerWhileSelectProps extends SelectionTriggerImplProps {}
+interface SelectionTriggerWhileSelectProps extends SelectionTriggerImplProps { }
 
 const SelectionTriggerWhileSelect = React.forwardRef<
   SelectionTriggerWhileSelectElement,
@@ -262,7 +263,7 @@ const SelectionTriggerWhileSelect = React.forwardRef<
 
 type SelectionTriggerImplElement = React.ElementRef<typeof Primitive.div>
 type PrimitiveDivProps = React.ComponentPropsWithoutRef<typeof Primitive.div>
-interface SelectionTriggerImplProps extends PrimitiveDivProps {}
+interface SelectionTriggerImplProps extends PrimitiveDivProps { }
 
 const SelectionTriggerImpl = React.forwardRef<
   SelectionTriggerImplElement,
@@ -378,6 +379,7 @@ const [SelectionContentProvider, useContentContext] =
 type Boundary = Element | null
 
 type SelectionContentImplElement = React.ElementRef<typeof Primitive.div>
+type DismissableLayerProps = React.ComponentPropsWithoutRef<typeof DismissableLayer>
 interface SelectionContentImplProps extends PrimitiveDivProps {
   side?: Side
   sideOffset?: number
@@ -389,6 +391,10 @@ interface SelectionContentImplProps extends PrimitiveDivProps {
   sticky?: 'partial' | 'always'
   hideWhenDetached?: boolean
   avoidCollisions?: boolean
+  onEscapeKeyDown?: DismissableLayerProps['onEscapeKeyDown']
+  onPointerDownOutside?: DismissableLayerProps['onPointerDownOutside']
+  onFocusOutside?: DismissableLayerProps['onFocusOutside']
+  onInteractOutside?: DismissableLayerProps['onInteractOutside']
 }
 
 const SelectionContentImpl = React.forwardRef<
@@ -406,11 +412,14 @@ const SelectionContentImpl = React.forwardRef<
     collisionPadding: collisionPaddingProp = 0,
     hideWhenDetached = false,
     avoidCollisions = true,
+    onEscapeKeyDown,
+    onPointerDownOutside,
+    onFocusOutside,
+    onInteractOutside,
     ...contentProps
   } = props
   const context = useSelectionContext(CONTENT_NAME)
   const { onClose, onContentChange } = context
-
   const [content, setContent] = React.useState<HTMLDivElement | null>(null)
   const composedRefs = useComposedRefs(forwardedRef, (node) => setContent(node))
 
@@ -446,11 +455,11 @@ const SelectionContentImpl = React.forwardRef<
       avoidCollisions ? flip(detectOverflowOptions) : undefined,
       avoidCollisions
         ? shift({
-            mainAxis: true,
-            crossAxis: false,
-            limiter: sticky === 'partial' ? limitShift() : undefined,
-            ...detectOverflowOptions,
-          })
+          mainAxis: true,
+          crossAxis: false,
+          limiter: sticky === 'partial' ? limitShift() : undefined,
+          ...detectOverflowOptions,
+        })
         : undefined,
       arrow ? floatingUIarrow({ element: arrow, padding: arrowPadding }) : undefined,
       transformOrigin({ arrowWidth, arrowHeight }),
@@ -462,25 +471,6 @@ const SelectionContentImpl = React.forwardRef<
     refs.setReference(context.virtualRef)
     onContentChange(refs.floating.current as HTMLDivElement)
   }, [context.virtualRef, onContentChange, refs])
-
-  React.useEffect(() => {
-    const handlePointer = () => {
-      // Ensure to get latest selection
-      setTimeout(() => {
-        const selection = document.getSelection()
-        if (selection?.isCollapsed) {
-          onClose()
-        }
-      })
-    }
-
-    document.addEventListener('pointerdown', handlePointer)
-    document.addEventListener('pointerup', handlePointer)
-    return () => {
-      document.removeEventListener('pointerdown', handlePointer)
-      document.removeEventListener('pointerup', handlePointer)
-    }
-  }, [onClose])
 
   const [placedSide, placedAlign] = getSideAndAlignFromPlacement(placement)
 
@@ -514,23 +504,32 @@ const SelectionContentImpl = React.forwardRef<
         arrowY={arrowY}
         shouldHideArrow={cannotCenterArrow}
       >
-        <Primitive.div
-          data-side={placedSide}
-          data-align={placedAlign}
-          data-state={context.open ? 'open' : 'closed'}
-          {...contentProps}
-          ref={composedRefs}
-          style={{
-            userSelect: 'none',
-            ...contentProps.style,
-            animation: !isPositioned ? 'none' : undefined,
-            opacity: middlewareData.hide?.referenceHidden ? 0 : undefined,
-            ['--selection-popover-content-transform-origin' as any]: [
-              middlewareData.transformOrigin?.x,
-              middlewareData.transformOrigin?.y,
-            ].join(' '),
-          }}
-        />
+        <DismissableLayer
+          asChild
+          onEscapeKeyDown={onEscapeKeyDown}
+          onPointerDownOutside={onPointerDownOutside}
+          onFocusOutside={onFocusOutside}
+          onInteractOutside={onInteractOutside}
+          onDismiss={onClose}
+        >
+          <Primitive.div
+            data-side={placedSide}
+            data-align={placedAlign}
+            data-state={context.open ? 'open' : 'closed'}
+            {...contentProps}
+            ref={composedRefs}
+            style={{
+              userSelect: 'none',
+              ...contentProps.style,
+              animation: !isPositioned ? 'none' : undefined,
+              opacity: middlewareData.hide?.referenceHidden ? 0 : undefined,
+              ['--selection-popover-content-transform-origin' as any]: [
+                middlewareData.transformOrigin?.x,
+                middlewareData.transformOrigin?.y,
+              ].join(' '),
+            }}
+          />
+        </DismissableLayer>
       </SelectionContentProvider>
     </div>
   )
@@ -553,7 +552,7 @@ const OPPOSITE_SIDE: Record<Side, Side> = {
 
 type SelectionArrowElement = React.ElementRef<typeof ArrowPrimitive.Root>
 type ArrowProps = React.ComponentPropsWithoutRef<typeof ArrowPrimitive.Root>
-interface SelectionArrowProps extends ArrowProps {}
+interface SelectionArrowProps extends ArrowProps { }
 
 const SelectionArrow = React.forwardRef<SelectionArrowElement, SelectionArrowProps>(
   (props, forwardedRef) => {
