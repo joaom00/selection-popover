@@ -35,7 +35,7 @@ export const SelectionTextToolbar = React.forwardRef<
           asChild
           sideOffset={8}
           className={clsx(
-            'flex items-center w-full min-w-max rounded-md bg-white shadow-xl shadow-blackA6 px-2.5 h-10',
+            'shadow-blackA6 flex h-10 w-full min-w-max items-center rounded-md bg-white px-2.5 shadow-xl',
             'data-[state=open]:animate-slideDownAndFade data-[state=closed]:animate-slideUpAndFade',
           )}
         >

@@ -5,30 +5,8 @@ import { clsx } from 'clsx'
 
 import { Button } from '@/components'
 
+const Select = SelectPrimitive.Root
 const SelectGroup = SelectPrimitive.Group
-
-type SelectRootProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>
-const Select = ({ children, ...props }: SelectRootProps) => {
-  const [open, setOpen] = React.useState(false)
-
-  React.useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      event.preventDefault()
-    }
-    if (open) {
-      document.addEventListener('pointerdown', handlePointerDown)
-    } else {
-      document.removeEventListener('pointerdown', handlePointerDown)
-    }
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [open])
-
-  return (
-    <SelectPrimitive.Root open={open} onOpenChange={setOpen} {...props}>
-      {children}
-    </SelectPrimitive.Root>
-  )
-}
 
 type SelectTriggerElement = React.ElementRef<typeof SelectPrimitive.Trigger>
 type SelectTriggerProps = React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
@@ -41,8 +19,8 @@ const SelectTrigger = React.forwardRef<SelectTriggerElement, SelectTriggerProps>
           {...triggerProps}
           ref={forwardedRef}
           className={clsx(
-            'bg-white text-violet11 hover:bg-mauve3 px-3',
-            'focus:ring-black focus:ring-inset',
+            'text-violet11 hover:bg-mauve3 bg-white px-3',
+            'focus:ring-inset focus:ring-black',
             className,
           )}
         >
@@ -67,13 +45,13 @@ const SelectContent = React.forwardRef<SelectContentElement, SelectContentProps>
         <SelectPrimitive.Content
           {...contentProps}
           ref={forwardedRef}
-          className="overflow-hidden bg-white rounded-md shadow-2xl"
+          className="overflow-hidden rounded-md bg-white shadow-2xl"
         >
-          <SelectPrimitive.ScrollUpButton className="flex items-center justify-center h-6 bg-mauve1 text-mauve11">
+          <SelectPrimitive.ScrollUpButton className="bg-mauve1 text-mauve11 flex h-6 items-center justify-center">
             <ChevronUpIcon />
           </SelectPrimitive.ScrollUpButton>
           <SelectPrimitive.Viewport className="p-1">{children}</SelectPrimitive.Viewport>
-          <SelectPrimitive.ScrollDownButton className="flex items-center justify-center h-6 bg-mauve1 text-mauve11">
+          <SelectPrimitive.ScrollDownButton className="bg-mauve1 text-mauve11 flex h-6 items-center justify-center">
             <ChevronDownIcon />
           </SelectPrimitive.ScrollDownButton>
         </SelectPrimitive.Content>
@@ -91,7 +69,7 @@ const SelectLabel = React.forwardRef<SelectLabelElement, SelectLabelProps>(
       <SelectPrimitive.Label
         {...props}
         ref={forwardedRef}
-        className="px-6 text-xs leading-6 text-mauve11"
+        className="text-mauve11 px-6 text-xs leading-6"
       />
     )
   },
@@ -105,7 +83,7 @@ const SelectItem = React.forwardRef<ItemRef, ItemProps>(
     return (
       <SelectPrimitive.Item
         className={clsx(
-          'text-sm leading-none text-violet11 rounded-sm flex gap-1.5 items-center h-7 pr-9 pl-6 relative select-none outline-none',
+          'text-violet11 relative flex h-7 select-none items-center gap-1.5 rounded-sm pr-9 pl-6 text-sm leading-none outline-none',
           'data-[highlighted]:bg-violet9 data-[highlighted]:text-violet1',
           'data-[disabled]:text-mauve8 data-[disabled]:pointer-events-none',
         )}
@@ -113,7 +91,7 @@ const SelectItem = React.forwardRef<ItemRef, ItemProps>(
         ref={forwardedRef}
       >
         <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-        <SelectPrimitive.ItemIndicator className="absolute left-0 w-6 inline-flex items-center justify-center">
+        <SelectPrimitive.ItemIndicator className="absolute left-0 inline-flex w-6 items-center justify-center">
           <CheckIcon />
         </SelectPrimitive.ItemIndicator>
       </SelectPrimitive.Item>
