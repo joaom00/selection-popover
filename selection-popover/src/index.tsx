@@ -184,7 +184,7 @@ const SelectionTriggerWhileSelect = React.forwardRef<
     setContainSelection(false)
   }, [])
 
-  const { onOpen, onClose, onOpenChange, onVirtualRefChange } = context
+  const { onOpen, onOpenChange, onVirtualRefChange } = context
 
   React.useEffect(() => {
     if (!context.disabled) {
@@ -196,11 +196,11 @@ const SelectionTriggerWhileSelect = React.forwardRef<
         const wasSelectionInsideTrigger = node?.contains(selection.anchorNode)
         if (!wasSelectionInsideTrigger) {
           hasOpenedRef.current = false
-          return onClose()
+          return
         }
         if (selection.isCollapsed) {
           hasOpenedRef.current = false
-          return onClose()
+          return
         }
         const hasTextSelected = selection.toString().trim() !== ''
         if (hasTextSelected) {
@@ -216,7 +216,7 @@ const SelectionTriggerWhileSelect = React.forwardRef<
       document.addEventListener('selectionchange', handleSelection)
       return () => document.removeEventListener('selectionchange', handleSelection)
     }
-  }, [context.disabled, onClose, onOpenChange, onOpen, onVirtualRefChange])
+  }, [context.disabled, onOpenChange, onOpen, onVirtualRefChange])
 
   React.useEffect(() => {
     if (containSelection) {
