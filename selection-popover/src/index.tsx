@@ -324,12 +324,12 @@ interface SelectionPortalProps extends Omit<PortalProps, 'asChild'> {
 }
 
 const SelectionPortal = (props: SelectionPortalProps) => {
-  const { forceMount, container, children } = props
+  const { forceMount, container, children, ...portalProps } = props
   const context = useSelectionContext(PORTAL_NAME)
   return (
     <PortalProvider forceMount={forceMount}>
       <Presence present={forceMount || context.open}>
-        <PortalPrimitive asChild container={container}>
+        <PortalPrimitive asChild container={container} {...portalProps}>
           {children}
         </PortalPrimitive>
       </Presence>
